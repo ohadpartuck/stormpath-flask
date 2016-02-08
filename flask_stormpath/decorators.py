@@ -9,8 +9,12 @@ from functools import wraps
 from flask import current_app
 from flask.ext.login import current_user
 
+not_authorized = 'You are not authorized to view this page, ' \
+                 'please contact your system administrator'
+please_login = 'please login to view this page'
 
-def groups_required(groups, all=True):
+
+def healthy_groups_required(groups, all=True):
     """
     This decorator requires that a user be part of one or more Groups before
     they are granted access.
@@ -44,17 +48,21 @@ def groups_required(groups, all=True):
                 return func(*args, **kwargs)
 
             # If the user is NOT authenticated, this user is unauthorized.
-            elif not current_user.is_authenticated():
+            if not current_user.is_authenticated():
+                current_app.login_manager.login_message = please_login
                 return current_app.login_manager.unauthorized()
 
             # If the user authenticated, and the all flag is set, we need to
             # see if the user is a member of *ALL* groups.
             if all and not current_user.has_groups(groups):
+                current_app.login_manager.login_message = not_authorized
                 return current_app.login_manager.unauthorized()
 
             # If the all flag is NOT set, we need to make sure the user is a
             # member of at least one group.
             elif not current_user.has_groups(groups, all=False):
+                # todo move this decorator to our application code
+                current_app.login_manager.login_message = not_authorized
                 return current_app.login_manager.unauthorized()
 
             # Lastly, if the user has successfully passsed all authentication /
