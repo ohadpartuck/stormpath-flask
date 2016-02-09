@@ -52,16 +52,9 @@ def healthy_groups_required(groups, all=True):
                 current_app.login_manager.login_message = please_login
                 return current_app.login_manager.unauthorized()
 
-            # If the user authenticated, and the all flag is set, we need to
-            # see if the user is a member of *ALL* groups.
-            if all and not current_user.has_groups(groups):
-                current_app.login_manager.login_message = not_authorized
-                return current_app.login_manager.unauthorized()
-
-            # If the all flag is NOT set, we need to make sure the user is a
-            # member of at least one group.
-            elif not current_user.has_groups(groups, all=False):
-                # todo move this decorator to our application code
+            # If the user authenticated, we need to check if
+            # he belongs to one / all of the groups (depends on the all flag)
+            if not current_user.has_groups(groups, all = all):
                 current_app.login_manager.login_message = not_authorized
                 return current_app.login_manager.unauthorized()
 
